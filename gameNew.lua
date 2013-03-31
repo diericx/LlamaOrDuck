@@ -9,11 +9,12 @@ function M.new()
 
 	local picsTable = {}
 	local reactSpeeds = {}
-	local numberOfImages = 5
+	local numberOfImages = 7
 	local newImageTime = 60
 	local score = 0
 	local newImageCooldown = 60
 	local gameOver = false
+	local oldRandomImage
 	local llamaOrDuck
 	local retryBtn
 	local menuBtn
@@ -22,7 +23,7 @@ function M.new()
 	local duckBtn
 	local scoreText
 
-	scoredojo.refreshUserData("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b")
+	-- scoredojo.refreshUserData("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b")
 
 	local function loadImages ()
 		for i = 1, (numberOfImages*2) do
@@ -47,12 +48,21 @@ function M.new()
 
 	local function displayNewPic ()
 		llamaOrDuck = math.random(1,2)
-		local randomImage = math.random(1, numberOfImages)
+		local randomImage = math.random( 1, numberOfImages )
 		local folder
 
 		if llamaOrDuck == 1 then
 			randomImage = randomImage + numberOfImages
 		end
+
+		if randomImage == oldRandomImage then
+			if randomImage > numberOfImages then
+				randomImage = randomImage - 1
+			elseif randomImage < numberOfImages then
+				randomImage = randomImage + 1
+			end
+		end
+
 
 		for i = 1, #picsTable do
 			if picsTable[i].display == true then
@@ -62,6 +72,7 @@ function M.new()
 		print(randomImage)
 		picsTable[randomImage].display = true
 
+		oldRandomImage = randomImage
 	end
 	displayNewPic()
 

@@ -4,47 +4,50 @@ local usernameField=nil
 local passwordField=nil
 local emailField=nil
 local headers={}
+local loginOrRegister = "register"
+local alreadyLoggedIn = false -- check if userinfo is already there
 
-function M.refreshUserData (baseLink, token)
-	local userInfoTemp = {email = nil, password = nil, username = nil}
-	local function networkCallback(event)
-		print("RESPONSE USER DATA REFRESH", event.response)
-		if ( event.isError ) or event.response == "The request timed out." or event.status == 404 or event.status == 502 then
-			print( "Network Error!")
-		else
-			local data = json.decode(event.response)
-			if data.success == true then
-				print("USER DATA REFRESHED!")
-				userInfoTemp.id = data.id
-				--login after register to get auth token then remove pass
-				if loginOrRegister == "register" then
-					loginOrRegister = "login"
-				elseif loginOrRegister == "login" then
-					--userInfoTemp.password = "HIDDEN FROM SNEAKY EYES"
-				end
-				--save auth token
-				userInfoTemp.authKey = data.auth_token
-				print(data.auth_token, "AUTH TOKEN #################")
-				--save user info
-			    Save(userInfoTemp, "userInfo")
-			    -- --set auth token
-			    headers["Authorization"] = "Token token="..tostring(data.auth_token)
-				finishedRefresh = true
-			else
-				print("Server Error")
-			end
-		end
-	end
 
-	local link = tostring(baseLink).."login"
-	local postData = "leaderboard_key="..token.."&username="..tostring(userInfoTemp.username).."&password="..tostring(userInfoTemp.password)
+-- function M.refreshUserData (baseLink, token)
+-- 	local userInfoTemp = {email = nil, password = nil, username = nil}
+-- 	local function networkCallback(event)
+-- 		print("RESPONSE USER DATA REFRESH", event.response)
+-- 		if ( event.isError ) or event.response == "The request timed out." or event.status == 404 or event.status == 502 then
+-- 			print( "Network Error!")
+-- 		else
+-- 			local data = json.decode(event.response)
+-- 			if data.success == true then
+-- 				print("USER DATA REFRESHED!")
+-- 				userInfoTemp.id = data.id
+-- 				--login after register to get auth token then remove pass
+-- 				if loginOrRegister == "register" then
+-- 					loginOrRegister = "login"
+-- 				elseif loginOrRegister == "login" then
+-- 					--userInfoTemp.password = "HIDDEN FROM SNEAKY EYES"
+-- 				end
+-- 				--save auth token
+-- 				userInfoTemp.authKey = data.auth_token
+-- 				print(data.auth_token, "AUTH TOKEN #################")
+-- 				--save user info
+-- 			    Save(userInfoTemp, "userInfo")
+-- 			    -- --set auth token
+-- 			    headers["Authorization"] = "Token token="..tostring(data.auth_token)
+-- 				finishedRefresh = true
+-- 			else
+-- 				print("Server Error")
+-- 			end
+-- 		end
+-- 	end
 
-	local params = {}
-	params.body = postData
-	params.headers = headers
-	print("POST DATA USER REFRESH = ", postData)
-	network.request( link, "POST", networkCallback, params)
-end
+-- 	local link = tostring(baseLink).."login"
+-- 	local postData = "leaderboard_key="..token.."&username="..tostring(userInfoTemp.username).."&password="..tostring(userInfoTemp.password)
+
+-- 	local params = {}
+-- 	params.body = postData
+-- 	params.headers = headers
+-- 	print("POST DATA USER REFRESH = ", postData)
+-- 	network.request( link, "POST", networkCallback, params)
+-- end
 
 function M.start (baseLink, token, leaderBoardCount)
 	local widget = require "widget"
@@ -59,9 +62,6 @@ function M.start (baseLink, token, leaderBoardCount)
 	local loadingScreenGroup = display.newGroup()
 	group:insert(loadingScreenGroup)
 
-	local loginOrRegister = "register"
-
-	local alreadyLoggedIn = false -- check if userinfo is already there
 	local userInfoTemp
 	local topBoundary = display.screenOriginY
 	local bottomBoundary = display.screenOriginY
@@ -84,7 +84,7 @@ function M.start (baseLink, token, leaderBoardCount)
 		alreadyLoggedIn = false
 	end
 	--refresh user data
-	M.refreshUserData("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b")
+	-- M.refreshUserData("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b")
 	--------------
 	--functions
 	--------------
@@ -486,6 +486,8 @@ function M.start (baseLink, token, leaderBoardCount)
 		local function getLeaderboardInfo(table, timeframe)
 			local link = tostring(baseLink).."getTopN"
 			local userInfo = Load("userInfo")
+			headers["Authorization"] = "Token token="..tostring(userInfo.authKey)
+
 			clearGroup(errorsGroup)
 
 			local function networkCallback(event)
@@ -527,11 +529,11 @@ function M.start (baseLink, token, leaderBoardCount)
 		checkForLeaderboardDataTimer = timer.performWithDelay(100, function()
 			if allTime then
 				if #allTime > 0 then
+					timer.cancel(checkForLeaderboardDataTimer)
 					displayLeaderboard(allTime)
 				end
 			end
-			timer.cancel(checkForLeaderboardDataTimer)
-		end)
+		end, 15)
 
 		local function tabCallback(event)
 	    	if event.target.id == 1 then 
@@ -593,7 +595,6 @@ function M.start (baseLink, token, leaderBoardCount)
 	    tabs.buttons[1].x = -110
 	    tabs.buttons[3].x = cw - 315
 	    loadingScreenGroup:toFront()
-
 	end
 	return group
 end
@@ -602,7 +603,7 @@ function M.submitHighscore (baseLink, leaderboard_key, scoreType, scoreValue)
 
 	local json = require "json"
 	local userInfo = Load("userInfo")
-	if userInfo.authKey and userInfo.username then
+	if userInfo and userInfo.authKey and userInfo.username then
 		local function submitHighscoreCallback ( event )
 			local data = json.decode(event.response)
 			print(data)

@@ -84,8 +84,9 @@ headers = {}
 headers["Accept"] = "application/json"
 
 if userInfo ~= nil and userInfo.authKey ~= nil then
+	print("Asdf")
 	headers["Authorization"] = "Token token="..tostring(userInfo.authKey)
-	print(userInfo.authKey)
+	print(userInfo.authKey, userInfo.username, userInfo.password)
 end
 
 director = {
