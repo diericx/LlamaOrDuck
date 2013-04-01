@@ -88,10 +88,13 @@ function M.start (baseLink, token, leaderBoardCount)
 	local topBar = display.newImage(group, "scoredojo/topBar.png", 0, -40)
 	topBar:scale(1, 0.6)
 
+	local tabs
+
 	local function removeFields()
 		display.remove(emailField)
 		display.remove(passwordField)
 		display.remove(usernameField)
+		display.remove(tabs)
 	end
 
 	local backBtn = displayNewButton(group, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "DimitriSwank", 40, removeFields, nil)	
@@ -269,6 +272,7 @@ function M.start (baseLink, token, leaderBoardCount)
   --           print( "Text entered = " .. tostring( self.text ) )         -- display the text entered
   --       end
 	end
+
 	--display login
 	local function login ()
 		loginOrRegister = "login"
@@ -426,13 +430,17 @@ function M.start (baseLink, token, leaderBoardCount)
 		group:insert(topBarGroup)
 		--scrollView:insert(currentLoaderboardGroup)
 		
-		local day
-		local week
-		local allTime
+		local day = {}
+		day.name = "day"
+		local week = {}
+		week.name = "week"
+		local allTime = {}
 
 		local function displayLeaderboard(table)
 			print(#table)
 			local userInfo = Load("userInfo")
+			local inAllTime = false
+
 			if #table > 0 then
 				--create scroll view
 				local scrollView = scrollView.new{ top=topBoundary + 100, bottom=bottomBoundary + 200 }
@@ -481,6 +489,60 @@ function M.start (baseLink, token, leaderBoardCount)
 					--check if player is in top 10, if so highlight name
 					if table[i].username == userInfo.username then
 						playerRow:setFillColor(220,220,255)
+						if table == allTime then
+							inAllTime = true
+						end
+					end
+					if inAllTime == true then
+					else
+						if table.name == "allTime" then
+							if i == #table then
+								i = i + 1
+								local userInfo = Load("userInfo")
+								--put one at bottom for guy if he isn't in top 10
+								print("ONLY 1")
+								playerRow = display.newImage( "scoredojo/tableSingle.png", 22, i*114 - 100)
+								playerRow.x = cw/2
+								playerRow.y = playerRow.y + 50
+								currentLoaderboardGroup:insert( playerRow )
+								local playerRankBox = display.newRoundedRect(currentLoaderboardGroup, playerRow.x - 265, playerRow.y - 50, 100, 100, 20)
+								playerRankBox:setFillColor(100, 100, 100)
+								playerRankBox.alpha = 0.1
+								local playerRankText = display.newText(currentLoaderboardGroup, "", playerRankBox.x, playerRankBox.y , "DimitriSwank", 70)
+								playerRankText.x, playerRankText.y = playerRankBox.x, playerRankBox.y
+								playerRankText:setTextColor(199, 147, 22)
+								local playerNameText = display.newText(currentLoaderboardGroup, userInfo.username, playerRankBox.x + 75, 0, "DimitriSwank", 35)
+								playerNameText:setTextColor(100, 100, 100)
+								playerNameText.y = playerRow.y - 30
+								local playerScoreText = display.newText(currentLoaderboardGroup, "", playerRankBox.x + 90, 0, "DimitriSwank", 50)
+								playerScoreText:setTextColor(199, 147, 22)
+								playerScoreText.y = playerRow.y + 25
+
+								playerRow:setFillColor(220,220,255)
+								local divider = display.newRoundedRect(currentLoaderboardGroup, 0, 0, cw-50, 10, 4)
+								divider.x, divider.y = cw/2, playerRow.y - 80
+								divider:setFillColor(220,220,220)
+
+								--get users rank and score
+								local userRankScore = {rank = 0, score = 0}
+								local function networkCallback (event)
+									local data = json.decode(event.response)
+									if data.success == true then
+										playerRankText.text = tostring(data.rank)
+										playerScoreText.text = tostring(data.score)
+										return userRankScore
+									else 
+									end
+								end
+
+								link = tostring(baseLink).."getRank"
+								postData = "leaderboard_key="..tostring(token)
+								local params = {}
+								params.body = postData
+								params.headers = headers
+								network.request( link, "POST", networkCallback, params)
+							end
+						end
 					end
 					topBarGroup:toFront()
 				end
@@ -504,7 +566,9 @@ function M.start (baseLink, token, leaderBoardCount)
 				playerRow.x = cw/2
 				topBarGroup:toFront()
 			end
+			--display your name at bottom if you're not in all time
 		end
+
 
 		local function getLeaderboardInfo(table, timeframe)
 			local link = tostring(baseLink).."getTopN"
@@ -526,10 +590,13 @@ function M.start (baseLink, token, leaderBoardCount)
 					local data = json.decode(event.response)
 					if table == "allTime" then
 						allTime = data
+						allTime.name = "allTime"
 					elseif table == "week" then
 						week = data
+						week.name = "week"
 					elseif table == "day" then
 						day = data
+						day.name = "day"
 					end
 
 					table = data

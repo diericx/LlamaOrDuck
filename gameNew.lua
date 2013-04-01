@@ -157,9 +157,17 @@ function M.new()
 
 		llamaBtn.x, duckBtn.x = 100000, 100000
 
+		newImageCooldown = 180
+
+		score = 0
+		scoreText.text = score
+
+		tooSlow = false
+		falseAnswer = false 
+		gameOver = false
+
 		countdownToStart()
 
-		newImageCooldown = 180
 		setEnterFrame(enterframe)	
 
 	end

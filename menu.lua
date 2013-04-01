@@ -19,8 +19,23 @@ function M.new()
 	bg.x = cw/2
 	bg.y = ch/2
 
-	local playBtn = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2 - 175, cw/2, false, 1, 0, "gameNew", "Play", "DimitriSwank", 80, nil)
-	local leaderboardsBtnH = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2 - 175, cw/2 + 200, false, 1, 0, "leaderboards", "Highscores", "DimitriSwank", 57, nil)
+	local function displayLoadingScreen()
+		local loadingScreen = display.newRect(group, 0, 0, cw, ch)
+		loadingScreen:setFillColor(0,0,0)
+		loadingScreen.alpha = 0.5
+		local loadingText = display.newText(group, "Loading...", cw/2, ch/2, "DimitriSwank", 60)
+		loadingText.x = cw/2
+		loadingText.y = ch/2 - 50
+
+		local function loadingScreenListener()
+			return true
+		end
+		loadingScreen:addEventListener("touch", loadingScreenListener)
+		timer.performWithDelay( 100, function () director:changeScene("gameNew") end, 1)
+	end
+
+	local playBtn = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2 - 175, cw/2, false, 1, 0, nil, "Play", "DimitriSwank", 80, displayLoadingScreen, nil)
+	local leaderboardsBtnH = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2 - 175, cw/2 + 200, false, 1, 0, "leaderboards", "Highscores", "DimitriSwank", 57, nil, nil)
 	
 	--group:insert(leaderboardsBtnH)
 	--director:changeScene("game")
