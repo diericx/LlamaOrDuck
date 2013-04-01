@@ -12,8 +12,10 @@ function M.new()
 	local numberOfImages = 7
 	local newImageTime = 60
 	local score = 0
-	local newImageCooldown = 60
+	local newImageCooldown = 180
 	local gameOver = false
+	local tooSlow = false
+	local falseAnswer = false
 	local oldRandomImage
 	local llamaOrDuck
 	local retryBtn
@@ -22,6 +24,13 @@ function M.new()
 	local llamaBtn
 	local duckBtn
 	local scoreText
+	local yourFault
+	local yourScoreTxt
+	local darkener
+	local enterframe
+	local signInTxt
+	local countdownToStart
+
 
 	-- scoredojo.refreshUserData("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b")
 
@@ -47,21 +56,16 @@ function M.new()
 	loadImages()
 
 	local function displayNewPic ()
-		llamaOrDuck = math.random(1,2)
-		local randomImage = math.random( 1, numberOfImages )
-		local folder
 
-		if llamaOrDuck == 1 then
-			randomImage = randomImage + numberOfImages
-		end
-
-		if randomImage == oldRandomImage then
-			if randomImage > numberOfImages then
-				randomImage = randomImage - 1
-			elseif randomImage < numberOfImages then
-				randomImage = randomImage + 1
+		repeat 
+			llamaOrDuck = math.random(1,2)
+			newRandomImage = math.random(1, numberOfImages) 
+			if llamaOrDuck == 1 then
+					newRandomImage = newRandomImage + numberOfImages
 			end
-		end
+		until newRandomImage ~= randomImage
+
+		randomImage = newRandomImage
 
 
 		for i = 1, #picsTable do
@@ -77,14 +81,11 @@ function M.new()
 	displayNewPic()
 
 	local function endGame ()
-		local darkener = display.newRect(group, 0,0,cw,ch)
-		darkener:setFillColor(0,0,0)
-		darkener.alpha = 0.5
-
-		local yourScoreTxt = display.newText(group, "Your Score:", 0, 0, "DimitriSwank", 80)
-		yourScoreTxt.x, yourScoreTxt.y = cw/2, ch/2-400
-		yourScoreTxt:setTextColor(255, 255, 255)
-
+		if tooSlow == true then
+			yourFault.text = "You were too slow!"
+		elseif falseAnswer == true then
+			yourFault.text = "Wrong answer!"
+		end
 		-- local yourSpeedTxt = display.newText(group, "Your Average Speed:", 0, 0, native.SystemDefaultFont, 60)
 		-- yourSpeedTxt.x, yourSpeedTxt.y = cw/2, ch/2 + 150
 		-- yourSpeedTxt:setTextColor(255, 255, 255)
@@ -100,25 +101,66 @@ function M.new()
 		-- end
 		-- local avgSpeed = totalOfSpeeds / #reactSpeeds
 		-- yourSpeedNumbTxt.text = math.round(avgSpeed)
+		darkener.x = 0
+
+		yourScoreTxt.x, yourScoreTxt.y = cw/2, ch/2-300
 
 		scoreText.y = yourScoreTxt.y + 120
 		scoreText:toFront()
 
-		retryBtn.x, retryBtn.y = cw/2-150,  ch/2-200
+		retryBtn.x, retryBtn.y = cw/2-150,  ch/2-100
 		retryBtn:toFront()
 
-		menuBtn.x, menuBtn.y = cw/2-150,  ch/2 - 50
+		menuBtn.x, menuBtn.y = cw/2-150,  ch/2 + 50
 		menuBtn:toFront()
 
-		leaderBoardsBtn.x, leaderBoardsBtn.y = cw/2-150-26,  ch/2 + 100
+		leaderBoardsBtn.x, leaderBoardsBtn.y = cw/2-150-26,  ch/2 + 200
 		leaderBoardsBtn:toFront()
 
 		llamaBtn.x, duckBtn.x = 100000, 100000
 		gameOver = true
 
-		scoredojo.submitHighscore ("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b", 1, score)
+		local userInfo = Load("userInfo")
+		if userInfo then
+			scoredojo.submitHighscore ("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b", 1, score)
+		else 
+			signInTxt.y = ch-50
+		end
 
-		setEnterFrame(nil)
+		setEnterFrame(enterframe)
+
+	end
+
+	local function restart()
+
+		print("RESTART")
+		darkener.x = 100000
+
+		yourScoreTxt.x = 100000
+		
+		yourFault.x = 100000
+
+		scoreText.y = 100000
+
+		retryBtn.x, retryBtn.y = cw/2-1000050,  ch/2-100
+
+		menuBtn.x, menuBtn.y = cw/2-1000050,  ch/2 + 50
+
+		leaderBoardsBtn.x, leaderBoardsBtn.y = cw/2-1500000-26,  ch/2 + 200
+
+		llamaBtn.x, duckBtn.x = cw-600, cw-300
+
+		signInTxt.y = ch-50000
+
+		scoreText.x = cw/2
+		scoreText.y = ch/2 - 450
+
+		llamaBtn.x, duckBtn.x = 100000, 100000
+
+		countdownToStart()
+
+		newImageCooldown = 180
+		setEnterFrame(enterframe)	
 
 	end
 
@@ -130,7 +172,8 @@ function M.new()
 	   --elseif ( "ended" == phase ) then
 	      print( target.id .. " released" )
 	      if (target.id == "llama" and llamaOrDuck == 1) or (target.id == "duck" and llamaOrDuck == 2) then
-	      	endGame()
+	      		falseAnswer = true
+	      		endGame()
 	      else
 	      	if gameOver == false then
 	      		--add score according to speed
@@ -182,20 +225,35 @@ function M.new()
 	-- llamaBtn.id = "llama"
 	-- group:insert(llamaBtn)
 
-	llamaBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw-600, ch-150, false, 1, nil, nil, "Llama", "DimitriSwank", 60, onButtonEvent, "llama")
-
-	duckBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw-300, ch-150, false, 1, nil, nil, "Duck", "DimitriSwank", 60, onButtonEvent, "duck")
-
-	retryBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw/2-100050, ch/2-200000, false, 1, nil, "restart", "Retry", "DimitriSwank", 60, nil, nil)	
+	retryBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw/2-100050, ch/2-200000, false, 1, nil, nil, "Retry", "DimitriSwank", 60, restart, nil)	
 
 	menuBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw/2-100050, ch/2-200000, false, 1, nil, "menu", "Menu", "DimitriSwank", 60, nil, nil)	
 
 	leaderBoardsBtn = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2-100050, ch/2-200000, false, 1, nil, "leaderboards", "Highscores", "DimitriSwank", 55, nil, nil)	
+	
+	darkener = display.newRect(group, 100000,0,cw,ch)
+	darkener:setFillColor(0,0,0)
+	darkener.alpha = 0.5
+	darkener:setReferencePoint(display.TopLeftReferencePoint)
 
+	yourScoreTxt = display.newText(group, "Your Score:", 0, 0, "DimitriSwank", 80)
+	yourScoreTxt.x, yourScoreTxt.y = cw/2, ch/2-30000
+	yourScoreTxt:setTextColor(255, 255, 255)
+	--yourScoreTxt:setReferencePoint(display.TopLeftReferencePoint)
+	
+	yourFault = display.newText(group, "", 0, 0, "DimitriSwank", 60)
+	yourFault.x, yourFault.y = cw/2, ch/2-450
+	yourFault:setTextColor(200, 0, 0)
+	yourFault:setReferencePoint(display.TopLeftReferencePoint)
+	
 	scoreText = display.newText(score, 0, 0, native.SystemDefaultFont, 90 )
 	group:insert(scoreText)
 	scoreText.x = cw/2
 	scoreText.y = ch/2 - 450
+
+	signInTxt = display.newText( "You need to login or create a Scoredojo account to view or submit highscores!", 0, 0, cw, 200, "Mensch", 33 )
+	signInTxt.y = ch-50000
+
 	-- local duckBtn = widget.newButton
 	-- {
 	--    left = cw-210,
@@ -226,7 +284,7 @@ function M.new()
 	-- retryBtn.id = "retry"
 	-- group:insert(retryBtn)
 
-	local function enterframe()
+	function enterframe()
 		for i = 1, #picsTable do
 			if picsTable[i].display == true then
 				picsTable[i].x = cw/2
@@ -240,11 +298,41 @@ function M.new()
 		if newImageCooldown > 0 then
 			newImageCooldown = newImageCooldown - 1
 		elseif newImageCooldown <= 0 then
+			tooSlow = true
 			endGame()
 			setEnterFrame(nil)
 		end
 	end
 	setEnterFrame(enterframe)
+
+	function countdownToStart ()
+		local readySetGo = 0
+		local scaleTime = 500
+		local readySetGoTxt = display.newText(group, "Ready!", 0, 0, "DimitriSwank", 80)
+		readySetGoTxt.x, readySetGoTxt.y = cw/2, ch/2
+		transition.to(readySetGoTxt, {time=scaleTime, xScale = 2, yScale = 2, alpha = 0})
+		local function readySetGoFunct ()
+			readySetGo = readySetGo + 1
+			if readySetGo == 1 then 
+				readySetGoTxt.text = "Set!"
+				readySetGoTxt.alpha = 1
+				readySetGoTxt.xScale, readySetGoTxt.yScale = 1,1
+				transition.to(readySetGoTxt, {time=scaleTime, xScale = 2, yScale = 2, alpha = 0})
+			elseif readySetGo == 2 then 
+				readySetGoTxt.text = "Go!"
+				readySetGoTxt.alpha = 1
+				readySetGoTxt.xScale, readySetGoTxt.yScale = 1,1
+				transition.to(readySetGoTxt, {time=scaleTime, xScale = 2, yScale = 2, alpha = 0})
+				
+				llamaBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw-600, ch-150, false, 1, nil, nil, "Llama", "DimitriSwank", 60, onButtonEvent, "llama")
+
+				duckBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw-300, ch-150, false, 1, nil, nil, "Duck", "DimitriSwank", 60, onButtonEvent, "duck")
+
+			end
+		end
+		timer.performWithDelay(750, readySetGoFunct, 2)
+	end
+	countdownToStart()
 
 	return group
 end

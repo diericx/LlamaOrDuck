@@ -83,6 +83,19 @@ function M.start (baseLink, token, leaderBoardCount)
 		userInfoTemp = {email = nil, password = nil, username = nil}
 		alreadyLoggedIn = false
 	end
+
+	--topBar shit
+	local topBar = display.newImage(group, "scoredojo/topBar.png", 0, -40)
+	topBar:scale(1, 0.6)
+
+	local function removeFields()
+		display.remove(emailField)
+		display.remove(passwordField)
+		display.remove(usernameField)
+	end
+
+	local backBtn = displayNewButton(group, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "DimitriSwank", 40, removeFields, nil)	
+
 	--refresh user data
 	-- M.refreshUserData("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b")
 	--------------
@@ -128,6 +141,7 @@ function M.start (baseLink, token, leaderBoardCount)
 	end
 	local submitUserInfo
 	function submitUserInfo()
+		native.setKeyboardFocus( nil )
 		print "*******   submitUserInfo()   *******"
 		--calback for sending things to server (gets responses)
 		clearGroup(errorsGroup)
@@ -341,8 +355,8 @@ function M.start (baseLink, token, leaderBoardCount)
 	--if alreadyLoggedIn is false or true, register or display leaderboards
 	if alreadyLoggedIn == false then
 		--create text at top
-		local text = display.newText( "You need to login or create a Scoredojo account!", 0, 0, cw, 200, "Mensch", 33 )
-	    text.x = cw/2
+		local text = display.newText( "You need to login or create a Scoredojo account to view highscores!", 0, 0, cw, 200, "Mensch", 33 )
+	    text.x, text.y = cw/2, 200
 	    group:insert(text)
 	    text:setTextColor(10,10,10)
 	    --see what tab was clicked then call either login or register
@@ -407,7 +421,9 @@ function M.start (baseLink, token, leaderBoardCount)
 	    register()
 	else
 		local currentLoaderboardGroup = display.newGroup()
+		local topBarGroup = display.newGroup()
 		group:insert(currentLoaderboardGroup)
+		group:insert(topBarGroup)
 		--scrollView:insert(currentLoaderboardGroup)
 		
 		local day
@@ -416,9 +432,10 @@ function M.start (baseLink, token, leaderBoardCount)
 
 		local function displayLeaderboard(table)
 			print(#table)
+			local userInfo = Load("userInfo")
 			if #table > 0 then
 				--create scroll view
-				local scrollView = scrollView.new{ top=topBoundary, bottom=bottomBoundary + 200 }
+				local scrollView = scrollView.new{ top=topBoundary + 100, bottom=bottomBoundary + 200 }
 				group:insert(scrollView)
 				--move tabs to front
 				if tabs then 
@@ -461,6 +478,11 @@ function M.start (baseLink, token, leaderBoardCount)
 					playerScoreText.y = playerRow.y + 25
 					--add them to a new scrollView
 					playerRow.x = cw/2
+					--check if player is in top 10, if so highlight name
+					if table[i].username == userInfo.username then
+						playerRow:setFillColor(220,220,255)
+					end
+					topBarGroup:toFront()
 				end
 			else
 				clearGroup(currentLoaderboardGroup)
@@ -480,6 +502,7 @@ function M.start (baseLink, token, leaderBoardCount)
 				playerScoreText.y = playerRow.y + 25
 				--add them to a new scrollView
 				playerRow.x = cw/2
+				topBarGroup:toFront()
 			end
 		end
 
@@ -595,6 +618,12 @@ function M.start (baseLink, token, leaderBoardCount)
 	    tabs.buttons[1].x = -110
 	    tabs.buttons[3].x = cw - 315
 	    loadingScreenGroup:toFront()
+	    --topBar shit
+	    local topBar = display.newImage(topBarGroup, "scoredojo/topBar.png", 0, -40)
+	    topBar:scale(1, 0.6)
+
+		local backBtn = displayNewButton(topBarGroup, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "DimitriSwank", 40, nil, nil)	
+
 	end
 	return group
 end

@@ -77,6 +77,8 @@ function Save( data, pathname )
 	return success 
 end
 
+
+
 --check for ser info, if there create header
 local userInfo = Load("userInfo", userInfo)
 --server stuff
@@ -118,7 +120,7 @@ function displayNewButton(group, image, imageDown, x, y, shouldScale, scaleX, ti
 	if text ~= nil then
 		newBtn.text = btnText
 		btnText = display.newText( text, newBtn.x, newBtn.y, font, textSize )
-		btnText.x, btnText.y = newBtn.x, newBtn.y - 5
+		btnText.x, btnText.y = newBtn.x, newBtn.y + 7
 		btnGroup:insert(btnText)
 	end
 
