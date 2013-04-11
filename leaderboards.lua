@@ -22,8 +22,8 @@ function M.new()
 	-- bg:rotate(0)
 	-- bg.x = cw/2
 	-- bg.y = ch/2
-	local bg = display.newRect(0, 0, cw, ch)
-	bg:setFillColor(240,240,240)
+	-- local bg = display.newRect(0, 0, cw, ch)
+	-- bg:setFillColor(240,240,240)
 
 	
 	scoredojo.start("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b", "10")

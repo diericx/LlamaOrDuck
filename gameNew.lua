@@ -10,9 +10,9 @@ function M.new()
 	local picsTable = {}
 	local reactSpeeds = {}
 	local numberOfImages = 7
-	local newImageTime = 60
+	local newImageTime = 55 --55
 	local score = 0
-	local newImageCooldown = 180
+	local newImageCooldown = 150 --150
 	local gameOver = false
 	local tooSlow = false
 	local falseAnswer = false
@@ -30,6 +30,7 @@ function M.new()
 	local enterframe
 	local signInTxt
 	local countdownToStart
+	local audioData = Load("audioData")
 
 
 	-- scoredojo.refreshUserData("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b")
@@ -54,6 +55,11 @@ function M.new()
 		end
 	end
 	loadImages()
+
+	--load audio
+	-- local correctSound = audio.loadSound("correct.mp3")
+	-- local wrongSound = audio.loadSound("wrong.mp3")
+	-- local crowdSound = audio.loadSound("crowd.mp3")
 
 	local function displayNewPic ()
 
@@ -127,7 +133,7 @@ function M.new()
 			signInTxt.y = ch-50
 		end
 
-		setEnterFrame(enterframe)
+		setEnterFrame(nil)
 
 	end
 
@@ -138,7 +144,7 @@ function M.new()
 
 		yourScoreTxt.x = 100000
 		
-		yourFault.x = 100000
+		yourFault.text = ""
 
 		scoreText.y = 100000
 
@@ -180,11 +186,20 @@ function M.new()
 	   --elseif ( "ended" == phase ) then
 	      print( target.id .. " released" )
 	      if (target.id == "llama" and llamaOrDuck == 1) or (target.id == "duck" and llamaOrDuck == 2) then
+	      		if audioData.toggle == "on" then
+	      			media.playSound("wrong.mp3")
+	      		end
+	      		--audio.play(wrongSound)
+	      		--audio.play(crowdSound)
 	      		falseAnswer = true
 	      		endGame()
 	      else
 	      	if gameOver == false then
+	      		if audioData.toggle == "on" then
+	      			media.playSound("correct.mp3")
+	      		end
 	      		--add score according to speed
+	      		--audio.play(correctSound)
 		      	print("NEW IMAGE CD = ", newImageCooldown)
 		      	score = score + math.round((newImageCooldown / 60)*100)
 		      	scoreText.text = score
@@ -259,7 +274,7 @@ function M.new()
 	scoreText.x = cw/2
 	scoreText.y = ch/2 - 450
 
-	signInTxt = display.newText( "You need to login or create a Scoredojo account to view or submit highscores!", 0, 0, cw, 200, "Mensch", 33 )
+	signInTxt = display.newText(group, "You need to login or create a Scoredojo account to view or submit highscores!", 23, 0, cw, 200, "Mensch", 33 )
 	signInTxt.y = ch-50000
 
 	-- local duckBtn = widget.newButton
@@ -306,6 +321,11 @@ function M.new()
 		if newImageCooldown > 0 then
 			newImageCooldown = newImageCooldown - 1
 		elseif newImageCooldown <= 0 then
+			if audioData.toggle == "on" then
+				media.playSound("wrong.mp3")
+			end
+			--audio.play(wrongSound)
+			--audio.play(crowdSound)
 			tooSlow = true
 			endGame()
 			setEnterFrame(nil)

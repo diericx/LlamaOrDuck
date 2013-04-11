@@ -77,6 +77,12 @@ function Save( data, pathname )
 	return success 
 end
 
+local audioData = Load("audioData")
+if audioData then
+else 
+	local audioData = {toggle = "on"}
+	Save(audioData, "audioData")
+end
 
 
 --check for ser info, if there create header
@@ -138,6 +144,7 @@ function displayNewButton(group, image, imageDown, x, y, shouldScale, scaleX, ti
 				btnText.alpha = 0.7
 			end
 		elseif event.phase == "ended" then
+			btnText.alpha = 1
 			display.remove(overlayBtn)
 			if customFunction then
 				customFunction(btnGroup)

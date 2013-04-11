@@ -55,12 +55,16 @@ function M.start (baseLink, token, leaderBoardCount)
 	local scrollView = require "scrollView"
 	--groups
 	local group = display.newGroup()
+	local bgGroup = display.newGroup()
+	group:insert(bgGroup)
 	local createdByTabGroup = display.newGroup()
 	group:insert(createdByTabGroup)
 	local errorsGroup = display.newGroup()
 	group:insert(errorsGroup)
 	local loadingScreenGroup = display.newGroup()
 	group:insert(loadingScreenGroup)
+	local currentLoaderboardGroup = display.newGroup()
+	group:insert(currentLoaderboardGroup)
 
 	local userInfoTemp
 	local topBoundary = display.screenOriginY
@@ -83,18 +87,26 @@ function M.start (baseLink, token, leaderBoardCount)
 		userInfoTemp = {email = nil, password = nil, username = nil}
 		alreadyLoggedIn = false
 	end
-
+	--background
+	local bg = display.newRect(bgGroup, 0, 0, cw, ch)
+	bg:setFillColor(240,240,240)
 	--topBar shit
 	local topBar = display.newImage(group, "scoredojo/topBar.png", 0, -40)
 	topBar:scale(1, 0.6)
 
 	local tabs
+	-- local emailField
+	-- local passwordField
+	-- local usernameField
 
 	local function removeFields()
+		native.setKeyboardFocus( nil )
 		display.remove(emailField)
 		display.remove(passwordField)
 		display.remove(usernameField)
 		display.remove(tabs)
+		display.remove(currentLoaderboardGroup)
+		display.remove(group)
 	end
 
 	local backBtn = displayNewButton(group, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "DimitriSwank", 40, removeFields, nil)	
@@ -104,13 +116,13 @@ function M.start (baseLink, token, leaderBoardCount)
 	--------------
 	--functions
 	--------------
-	local function displayLoadingScreen(group)
+	local function displayLoadingScreen(group, y)
 		local loadingScreen = display.newRect(loadingScreenGroup, 0, 0, cw, ch)
 		loadingScreen:setFillColor(0,0,0)
 		loadingScreen.alpha = 0.5
-		local loadingText = display.newText(loadingScreenGroup, "Loading...", cw/2, ch/2, "DimitriSwank", 60)
+		local loadingText = display.newText(loadingScreenGroup, "Loading...", cw/2, ch/2 , "DimitriSwank", 60)
 		loadingText.x = cw/2
-		loadingText.y = ch/2 - 50
+		loadingText.y = y
 		group:insert(loadingScreenGroup)
 
 		local function loadingScreenListener()
@@ -165,7 +177,7 @@ function M.start (baseLink, token, leaderBoardCount)
 						loginOrRegister = "login"
 						submitUserInfo()
 					elseif loginOrRegister == "login" then
-						--userInfoTemp.password = "HIDDEN FROM SNEAKY EYES"
+						userInfoTemp.password = "HIDDEN FROM SNEAKY EYES"
 					end
 					--save auth token
 					userInfoTemp.authKey = data.auth_token
@@ -174,8 +186,10 @@ function M.start (baseLink, token, leaderBoardCount)
 				    Save(userInfoTemp, "userInfo")
 				    -- --set auth token
 				    headers["Authorization"] = "Token token="..tostring(data.auth_token)
-				    clearGroup(createdByTabGroup) 
-				    clearGroup(loadingScreenGroup)
+				    removeFields()
+				    --clearGroup(createdByTabGroup) 
+				    --clearGroup(loadingScreenGroup)
+				    --clearGroup(group)
 				    director:changeScene("menu")
 				else
 					clearGroup(loadingScreenGroup)
@@ -238,7 +252,7 @@ function M.start (baseLink, token, leaderBoardCount)
 		params.headers = headers
 		print("LINK =====", link)
 		print("########################  BEFORE SEND  ###")
-		local loadingScreen = displayLoadingScreen(group)
+		local loadingScreen = displayLoadingScreen(group, ch/2 - 170)
 		network.request( link, "POST", networkCallback, params)
 		print("########################  AFTER SEND  ###")
 	end
@@ -360,7 +374,7 @@ function M.start (baseLink, token, leaderBoardCount)
 	if alreadyLoggedIn == false then
 		--create text at top
 		local text = display.newText( "You need to login or create a Scoredojo account to view highscores!", 0, 0, cw, 200, "Mensch", 33 )
-	    text.x, text.y = cw/2, 200
+	    text.x, text.y = cw/2 + 23, 200
 	    group:insert(text)
 	    text:setTextColor(10,10,10)
 	    --see what tab was clicked then call either login or register
@@ -399,14 +413,14 @@ function M.start (baseLink, token, leaderBoardCount)
 	        },
 	    }
 
-		tabs = widget.newTabBar
-		{
-		   left = 0,
-		   top = display.contentHeight - 60,
-		   width = 240,
-		   height = 60,
-		   buttons = tabButtons
-		}
+		-- tabs = widget.newTabBar
+		-- {
+		--    left = 0,
+		--    top = display.contentHeight - 60,
+		--    width = 240,
+		--    height = 60,
+		--    buttons = tabButtons
+		-- }
 	    tabs = widget.newTabBar{
 	        top=ch-130,
 	        height=130,
@@ -422,9 +436,10 @@ function M.start (baseLink, token, leaderBoardCount)
 	    tabs.buttons[2].label.height = 60
 	    tabs.buttons[2].label.y = 50
 	    tabs.buttons[2].x = tabs.buttons[2].x - tabs.buttons[2].width/2 + 70
+	    group:insert(tabs)
+
 	    register()
 	else
-		local currentLoaderboardGroup = display.newGroup()
 		local topBarGroup = display.newGroup()
 		group:insert(currentLoaderboardGroup)
 		group:insert(topBarGroup)
@@ -545,6 +560,7 @@ function M.start (baseLink, token, leaderBoardCount)
 						end
 					end
 					topBarGroup:toFront()
+					backBtn:toFront()
 				end
 			else
 				clearGroup(currentLoaderboardGroup)
@@ -565,6 +581,7 @@ function M.start (baseLink, token, leaderBoardCount)
 				--add them to a new scrollView
 				playerRow.x = cw/2
 				topBarGroup:toFront()
+				backBtn:toFront()
 			end
 			--display your name at bottom if you're not in all time
 		end
@@ -607,7 +624,7 @@ function M.start (baseLink, token, leaderBoardCount)
 			local postData = "leaderboard_key="..tostring(token).."&count="..tostring(leaderBoardCount).."&timeframe="..tostring(timeframe)
 			params.body = postData
 			params.headers = headers
-			local loadingScreen = displayLoadingScreen(group)
+			local loadingScreen = displayLoadingScreen(group, ch/2)
 			network.request( link, "POST", networkCallback, params)
 		end
 		getLeaderboardInfo("allTime", 1)
@@ -689,8 +706,8 @@ function M.start (baseLink, token, leaderBoardCount)
 	    local topBar = display.newImage(topBarGroup, "scoredojo/topBar.png", 0, -40)
 	    topBar:scale(1, 0.6)
 
-		local backBtn = displayNewButton(topBarGroup, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "DimitriSwank", 40, nil, nil)	
-
+		--local backBtn = displayNewButton(topBarGroup, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "DimitriSwank", 40, nil, nil)	
+		backBtn:toFront()
 	end
 	return group
 end
