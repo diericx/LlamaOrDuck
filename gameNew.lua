@@ -247,12 +247,11 @@ function M.new()
 	-- llamaBtn.baseLabel = "Default"
 	-- llamaBtn.id = "llama"
 	-- group:insert(llamaBtn)
+	retryBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw/2-100050, ch/2-200000, false, 1, nil, nil, "Retry", 255, 255, 255, "DimitriSwank", 60, restart, nil)
 
-	retryBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw/2-100050, ch/2-200000, false, 1, nil, nil, "Retry", "DimitriSwank", 60, restart, nil)	
-
-	menuBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw/2-100050, ch/2-200000, false, 1, nil, "menu", "Menu", "DimitriSwank", 60, nil, nil)	
-
-	leaderBoardsBtn = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2-100050, ch/2-200000, false, 1, nil, "leaderboards", "Highscores", "DimitriSwank", 55, nil, nil)	
+	menuBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw/2-100050, ch/2-200000, false, 1, nil, "menu", "Menu", 255, 255, 255, "DimitriSwank", 60, nil, nil)
+	
+	leaderBoardsBtn = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2-100050, ch/2-200000, false, 1, nil, "leaderboards", "Highscores", 255, 255, 255, "DimitriSwank", 55, nil, nil)
 	
 	darkener = display.newRect(group, 100000,0,cw,ch)
 	darkener:setFillColor(0,0,0)
@@ -352,9 +351,9 @@ function M.new()
 				readySetGoTxt.xScale, readySetGoTxt.yScale = 1,1
 				transition.to(readySetGoTxt, {time=scaleTime, xScale = 2, yScale = 2, alpha = 0})
 				
-				llamaBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw-600, ch-150, false, 1, nil, nil, "Llama", "DimitriSwank", 60, onButtonEvent, "llama")
+				llamaBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw-600, ch-150, false, 1, nil, nil, "Llama", 255, 255, 255, "DimitriSwank", 60, onButtonEvent, "llama")
 
-				duckBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw-300, ch-150, false, 1, nil, nil, "Duck", "DimitriSwank", 60, onButtonEvent, "duck")
+				duckBtn = displayNewButton(group, "Images/buttonUp.png", "Images/buttonDown.png", cw-300, ch-150, false, 1, nil, nil, "Duck", 255, 255, 255, "DimitriSwank", 60, onButtonEvent, "duck")
 
 			end
 		end

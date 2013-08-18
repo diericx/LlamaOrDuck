@@ -1,3 +1,9 @@
+
+local widget = require "widget"
+local json = require "json"
+local scrollView = require "scrollView"
+require "multiline_text"
+
 local M = {}
 --Make these variables accessible to all functions in this module
 local usernameField=nil
@@ -7,53 +13,15 @@ local headers={}
 local loginOrRegister = "register"
 local alreadyLoggedIn = false -- check if userinfo is already there
 
+local day = {}
+day.name = "day"
+local week = {}
+week.name = "week"
+local allTime = {}
+allTime.name = "allTime"
 
--- function M.refreshUserData (baseLink, token)
--- 	local userInfoTemp = {email = nil, password = nil, username = nil}
--- 	local function networkCallback(event)
--- 		print("RESPONSE USER DATA REFRESH", event.response)
--- 		if ( event.isError ) or event.response == "The request timed out." or event.status == 404 or event.status == 502 then
--- 			print( "Network Error!")
--- 		else
--- 			local data = json.decode(event.response)
--- 			if data.success == true then
--- 				print("USER DATA REFRESHED!")
--- 				userInfoTemp.id = data.id
--- 				--login after register to get auth token then remove pass
--- 				if loginOrRegister == "register" then
--- 					loginOrRegister = "login"
--- 				elseif loginOrRegister == "login" then
--- 					--userInfoTemp.password = "HIDDEN FROM SNEAKY EYES"
--- 				end
--- 				--save auth token
--- 				userInfoTemp.authKey = data.auth_token
--- 				print(data.auth_token, "AUTH TOKEN #################")
--- 				--save user info
--- 			    Save(userInfoTemp, "userInfo")
--- 			    -- --set auth token
--- 			    headers["Authorization"] = "Token token="..tostring(data.auth_token)
--- 				finishedRefresh = true
--- 			else
--- 				print("Server Error")
--- 			end
--- 		end
--- 	end
 
--- 	local link = tostring(baseLink).."login"
--- 	local postData = "leaderboard_key="..token.."&username="..tostring(userInfoTemp.username).."&password="..tostring(userInfoTemp.password)
-
--- 	local params = {}
--- 	params.body = postData
--- 	params.headers = headers
--- 	print("POST DATA USER REFRESH = ", postData)
--- 	network.request( link, "POST", networkCallback, params)
--- end
-
-function M.start (baseLink, token, leaderBoardCount)
-	local widget = require "widget"
-	local json = require "json"
-	local scrollView = require "scrollView"
-	--groups
+function M.start (baseLink, leaderboardKey, leaderBoardCount)
 	local group = display.newGroup()
 	local bgGroup = display.newGroup()
 	group:insert(bgGroup)
@@ -61,10 +29,10 @@ function M.start (baseLink, token, leaderBoardCount)
 	group:insert(createdByTabGroup)
 	local errorsGroup = display.newGroup()
 	group:insert(errorsGroup)
-	local loadingScreenGroup = display.newGroup()
-	group:insert(loadingScreenGroup)
 	local currentLoaderboardGroup = display.newGroup()
 	group:insert(currentLoaderboardGroup)
+	local loadingScreenGroup = display.newGroup()
+	group:insert(loadingScreenGroup)
 
 	local userInfoTemp
 	local topBoundary = display.screenOriginY
@@ -75,8 +43,8 @@ function M.start (baseLink, token, leaderBoardCount)
 	if fhd then
 		print("FOUND USER INFO")
 		userInfo = Load("userInfo")
-		print("user: "..tostring(userInfo.username), "pass: "..tostring(userInfo.password), "auth: "..tostring(userInfo.authKey))
-		if userInfo.username and userInfo.password then
+		--print("user: "..tostring(userInfo.username), "pass: "..tostring(userInfo.password), "auth: "..tostring(userInfo.authKey))
+		if userInfo.username and userInfo.authKey then
 			userInfoTemp = userInfo
 			alreadyLoggedIn = true -- turn true when releaseing to show leaderboards
 		else
@@ -84,20 +52,18 @@ function M.start (baseLink, token, leaderBoardCount)
 			alreadyLoggedIn = false
 		end
 	else
-		userInfoTemp = {email = nil, password = nil, username = nil}
+		userInfoTemp = {email = nil, username = nil}
 		alreadyLoggedIn = false
 	end
 	--background
 	local bg = display.newRect(bgGroup, 0, 0, cw, ch)
 	bg:setFillColor(240,240,240)
 	--topBar shit
-	local topBar = display.newImage(group, "scoredojo/topBar.png", 0, -40)
+	local topBar = display.newImage(group, "scoredojo/topBar.png", 0, -65)
 	topBar:scale(1, 0.6)
 
 	local tabs
-	-- local emailField
-	-- local passwordField
-	-- local usernameField
+
 
 	local function removeFields()
 		native.setKeyboardFocus( nil )
@@ -109,18 +75,16 @@ function M.start (baseLink, token, leaderBoardCount)
 		display.remove(group)
 	end
 
-	local backBtn = displayNewButton(group, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "DimitriSwank", 40, removeFields, nil)	
-
-	--refresh user data
-	-- M.refreshUserData("https://scoredojo.com/api/v1/", "536f2b4067689c1b1632f87e6a2ef31b")
+	--local backBtn = displayNewButton(group, "scoredojo/buttonUpSmall.png", "scoredojo/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "Hiruko", 40, removeFields, nil)	
+	local backBtn = displayNewButton(group, "scoredojo/buttonUpSmall.png", "scoredojo/buttonDownSmall.png", 20, -3, false, 1, nil, "menu", "Back", 255, 255, 255, "DimitriSwank", 40, removeFields, nil)
 	--------------
 	--functions
 	--------------
 	local function displayLoadingScreen(group, y)
-		local loadingScreen = display.newRect(loadingScreenGroup, 0, 0, cw, ch)
+		local loadingScreen = display.newRect(loadingScreenGroup, 0, -100, cw, ch+200)
 		loadingScreen:setFillColor(0,0,0)
 		loadingScreen.alpha = 0.5
-		local loadingText = display.newText(loadingScreenGroup, "Loading...", cw/2, ch/2 , "DimitriSwank", 60)
+		local loadingText = display.newText(loadingScreenGroup, "Loading...", cw/2, ch/2 , "Hiruko", 60)
 		loadingText.x = cw/2
 		loadingText.y = y
 		group:insert(loadingScreenGroup)
@@ -133,7 +97,7 @@ function M.start (baseLink, token, leaderBoardCount)
 
 	local function displayServerError (group)
 		local serverErrorText = display.newText(group, "Server Not Available! :(", 100, 400, native.systemDefaultFont, 40)
-		serverErrorText.x, serverErrorText.y = cw/2, 250
+		serverErrorText.x, serverErrorText.y = cw/2, 350
 		serverErrorText:setTextColor(200, 0, 0)
 	end
 
@@ -160,6 +124,9 @@ function M.start (baseLink, token, leaderBoardCount)
 		print "*******   submitUserInfo()   *******"
 		--calback for sending things to server (gets responses)
 		clearGroup(errorsGroup)
+
+
+
 		local function networkCallback(event)
 			print("SUBMIT")
 			print("RESPONSE", event.response)
@@ -176,8 +143,8 @@ function M.start (baseLink, token, leaderBoardCount)
 					if loginOrRegister == "register" then
 						loginOrRegister = "login"
 						submitUserInfo()
-					elseif loginOrRegister == "login" then
-						userInfoTemp.password = "HIDDEN FROM SNEAKY EYES"
+					--JHelseif loginOrRegister == "login" then
+					--JH	userInfoTemp.password = "HIDDEN FROM SNEAKY EYES"
 					end
 					--save auth token
 					userInfoTemp.authKey = data.auth_token
@@ -186,6 +153,9 @@ function M.start (baseLink, token, leaderBoardCount)
 				    Save(userInfoTemp, "userInfo")
 				    -- --set auth token
 				    headers["Authorization"] = "Token token="..tostring(data.auth_token)
+				    headers["Content-Type"] = "application/x-www-form-urlencoded"
+
+				    --print("auth:"..headers["Authorization"])
 				    removeFields()
 				    --clearGroup(createdByTabGroup) 
 				    --clearGroup(loadingScreenGroup)
@@ -194,26 +164,26 @@ function M.start (baseLink, token, leaderBoardCount)
 				else
 					clearGroup(loadingScreenGroup)
 					if loginOrRegister == "login" then --if your logging in only display this one error
-						displayLoginRegError(cw/2, ch/2 + 150, data.message, 50, cw)
+						displayLoginRegError(cw/2, ch/2 + 190, data.message, 50, cw)
 					elseif loginOrRegister == "register" then--if you are registering display multiple errors in different spots
 						--if theres a username error display it
 						if data.errors.username == nil then
 						else
-							local errorText = displayLoginRegError(cw/2 + 10, ch/2+40, "Username "..data.errors.username[1], 35, cw + 100)
+							local errorText = displayLoginRegError(cw/2 + 10, ch/2+50, "Username "..data.errors.username[1], 35, cw + 100)
 							errorText:setReferencePoint(display.CenterReferencePoint)
 							errorText.x = cw/2+60
 						end
 						--if theres an email error display it
 						if data.errors.email == nil then
 						else
-							local errorText = displayLoginRegError(cw/2 + 10, ch/2+140, "Email "..data.errors.email[1], 35, cw + 100)
+							local errorText = displayLoginRegError(cw/2 + 10, ch/2+150, "Email "..data.errors.email[1], 35, cw + 100)
 							errorText:setReferencePoint(display.CenterReferencePoint)
 							errorText.x = cw/2+60
 						end
 						--if theres a password error display it
 						if data.errors.password == nil then
 						else
-							local errorText = displayLoginRegError(cw/2, ch/2+240, "Password "..data.errors.password[1], 35, cw)
+							local errorText = displayLoginRegError(cw/2, ch/2+250, "Password "..data.errors.password[1], 35, cw)
 							errorText:setReferencePoint(display.CenterReferencePoint)
 							errorText.x = cw/2+5
 						end
@@ -242,10 +212,10 @@ function M.start (baseLink, token, leaderBoardCount)
 		print("LOGIN: entered =", userInfoTemp.email, userInfoTemp.password, userInfoTemp.username)
 		if loginOrRegister == "login" then
 			link = tostring(baseLink).."login"
-			postData = "leaderboard_key="..token.."&username="..tostring(userInfoTemp.username).."&password="..tostring(userInfoTemp.password)
+			postData = "leaderboard_key="..leaderboardKey.."&username="..tostring(userInfoTemp.username).."&password="..tostring(userInfoTemp.password)
 		elseif loginOrRegister == "register" then
 			link = tostring(baseLink).."addUser"
-			postData = "leaderboard_key="..tostring(token).."&username="..tostring(userInfoTemp.username).."&email="..tostring(userInfoTemp.email).."&password="..tostring(userInfoTemp.password)
+			postData = "leaderboard_key="..leaderboardKey.."&username="..tostring(userInfoTemp.username).."&email="..tostring(userInfoTemp.email).."&password="..tostring(userInfoTemp.password)
 		end
 		local params = {}
 		params.body = postData
@@ -259,32 +229,7 @@ function M.start (baseLink, token, leaderBoardCount)
 
 	--listener for text fields
 	local function fieldHandler( self, event )
-		-- local objName = event.name
-  --       -- print( "TextField Object is: " .. tostring( self.name ) )
-  --       if ( "began" == event.phase ) then
-  --       	print("BEGAN")
-  --       	group.y = localGroupDif
-  --       elseif ( "ended" == event.phase ) or ( "submitted" == event.phase ) then
-  --       	print("ENDED")
-  --       	print("name =", self.name)
-  --       	--if you tapped anywhere but another text field do this
-  --       	if self.name ~= "password" and self.name ~= "username" and self.name ~= "email" then
-  --           	group.y = localGroupOrig
-  --           	native.setKeyboardFocus( nil )
-  --           end
-  --       	print(self.text)
-  --       	if self.name == "email" then
-  --       		print("EMAIL SAVED")
-  --       		userInfoTemp.email = self.text
-  --       	elseif self.name == "password" then
-  --       		userInfoTemp.password = self.text
-  --       	elseif self.name == "username" then
-  --       		userInfoTemp.username = self.text
-  --       	end
-  --   		print("entered =", userInfoTemp.username, userInfoTemp.password)
-  --   		--SaveJson(userInfo, "userInfo")
-  --           print( "Text entered = " .. tostring( self.text ) )         -- display the text entered
-  --       end
+
 	end
 
 	--display login
@@ -318,7 +263,9 @@ function M.start (baseLink, token, leaderBoardCount)
 	    passwordFieldTxt.y = passwordField.y-5
 	    createdByTabGroup:insert(passwordFieldTxt)
 
-	    local submitButton = displayNewButton(createdByTabGroup, "scoredojo/greenButton.png", nil, cw/2-196, 200, true, 0.90, 100, nil, "Submit", "DimitriSwank", 60, submitUserInfo)
+	    --local submitButton = displayNewButton(createdByTabGroup, "scoredojo/greenButton.png", nil, cw/2-196, 200, true, 0.90, 100, nil, "Submit", "Hiruko", 60, submitUserInfo)
+		local submitButton = displayNewButton(createdByTabGroup, "scoredojo/greenButton.png", nil, cw/2-196, 200, true, 0.90, 100, nil, "Submit", 25, 25, 25, "Hiruko", 60, submitUserInfo, nil)
+
 		submitButton[1].name = "login"
 	end
 
@@ -366,76 +313,72 @@ function M.start (baseLink, token, leaderBoardCount)
 	    passwordFieldTxt.y = passwordField.y-5
 	    createdByTabGroup:insert(passwordFieldTxt)
 
-	    local submitButton = displayNewButton(createdByTabGroup, "scoredojo/greenButton.png", nil, cw/2-196, 200, true, 0.90, 100, nil, "Submit", "DimitriSwank", 60, submitUserInfo)
+	    --local submitButton = displayNewButton(createdByTabGroup, "scoredojo/greenButton.png", nil, cw/2-196, 200, true, 0.90, 100, nil, "Submit", "Hiruko", 60, submitUserInfo)
+		local submitButton = displayNewButton(createdByTabGroup, "scoredojo/greenButton.png", nil, cw/2-196, 200, true, 0.90, 100, nil, "Submit", 25, 25, 25, "Hiruko", 60, submitUserInfo, nil)
+
 		submitButton[1].name = "register"
 	end
 
 	--if alreadyLoggedIn is false or true, register or display leaderboards
 	if alreadyLoggedIn == false then
-		--create text at top
-		local text = display.newText( "You need to login or create a Scoredojo account to view highscores!", 0, 0, cw, 200, "Mensch", 33 )
-	    text.x, text.y = cw/2 + 23, 200
+		-- local text = display.newText( "You need to login or create a Scoredojo account to view highscores!", 0, 0, cw, 200, "Hiruko", 33 )
+	 --    text.x, text.y = cw/2 + 23, 200
+	 --    if tostring(device.model) == "BNTV250" then
+	 --    	text.x = text.x - 14
+	 --    end
+
+		local text = display.newMultiLineText  
+	        {
+	        text = "You need to login or create a Scoredojo account to view highscores!",
+	        width = cw,                  --OPTIONAL        Defailt : nil 
+	        left = 0,top = cw+200,             --OPTIONAL        Default : left = 0,top=0
+	        font = "Hiruko",     --OPTIONAL        Default : native.systemFont
+	        fontSize = 33,                --OPTIONAL        Default : 14
+	        color = {90,90,90},              --OPTIONAL        Default : {0,0,0}
+	        align = "center"              --OPTIONAL   Possible : "left"/"right"/"center"
+	        }
+	    text.x = cw/2
+	    text.y = ch/2 - 380
+
 	    group:insert(text)
-	    text:setTextColor(10,10,10)
-	    --see what tab was clicked then call either login or register
-	    local function tabCallback(event)
-	    	if event.target.id == 1 then 
-	    		print("login")
-	    		clearGroup(createdByTabGroup)
-	    		clearGroup(errorsGroup)
-	    		login()
-	    	elseif event.target.id == 2 then
-	    		print("register")
-	    		clearGroup(createdByTabGroup)
-	    		clearGroup(errorsGroup)
-	    		register()
-	    	end
-	    end
+
 
 	    --create login/register tabs
 		local tabButtons = {
 	        {
+	        	id=1,
 	            label="Login",
-	            up="scoredojo/blank.png",
-	            down="scoredojo/blank.png",
-	            width=32, height=32,
-	            size=25,
-	            onPress=tabCallback,
+	            labelYOffset=-50,
+	            defaultFile="scoredojo/blank-130.png",
+	            overFile="scoredojo/blank-130.png",
+	            width=32, height=130,
+	            size=36,
+	            onPress=function() clearGroup(createdByTabGroup); clearGroup(errorsGroup);login(); end,
 	        },
 	        {
+	        	id=2,
 	            label="Register",
-	            up="scoredojo/blank.png",
-	            down="scoredojo/blank.png",
-	            width=32, height=32,
-	            size=25,
-	            onPress=tabCallback,
+	            labelYOffset=-50,
+	           	defaultFile="scoredojo/blank-130.png",
+	            overFile="scoredojo/blank-130.png",
+	            width=32, height=130,
+	            size=36,
+	            onPress=function() clearGroup(createdByTabGroup); clearGroup(errorsGroup); register(); end,
 	            selected = true,
-	        },
+	        }
 	    }
-
-		-- tabs = widget.newTabBar
-		-- {
-		--    left = 0,
-		--    top = display.contentHeight - 60,
-		--    width = 240,
-		--    height = 60,
-		--    buttons = tabButtons
-		-- }
 	    tabs = widget.newTabBar{
 	        top=ch-130,
 	        height=130,
-	        buttons=tabButtons
+	        backgroundFile = "scoredojo/tabbar.png",
+			tabSelectedLeftFile = "scoredojo/tabBar_tabSelectedLeft.png",
+			tabSelectedMiddleFile = "scoredojo/tabBar_tabSelectedMiddle.png",
+			tabSelectedRightFile = "scoredojo/tabBar_tabSelectedRight.png",
+			tabSelectedFrameWidth = 20,
+			tabSelectedFrameHeight = 120,
+	        buttons=tabButtons,
 	    }
-	    tabs.buttons[1].width = tabs.buttons[1].width + 170
-	    tabs.buttons[1].label.width = 50
-	    tabs.buttons[1].label.height = 60
-	    tabs.buttons[1].label.y = 50
-	    tabs.buttons[1].x = tabs.buttons[2].x - tabs.buttons[2].width*3+70
-	    tabs.buttons[2].width = tabs.buttons[1].width + 170
-	    tabs.buttons[2].label.width = 80
-	    tabs.buttons[2].label.height = 60
-	    tabs.buttons[2].label.y = 50
-	    tabs.buttons[2].x = tabs.buttons[2].x - tabs.buttons[2].width/2 + 70
+
 	    group:insert(tabs)
 
 	    register()
@@ -445,14 +388,11 @@ function M.start (baseLink, token, leaderBoardCount)
 		group:insert(topBarGroup)
 		--scrollView:insert(currentLoaderboardGroup)
 		
-		local day = {}
-		day.name = "day"
-		local week = {}
-		week.name = "week"
-		local allTime = {}
+
 
 		local function displayLeaderboard(table)
-			print(#table)
+			--print("DISPLAY LEADERBOARD:")
+			--print(table.name)
 			local userInfo = Load("userInfo")
 			local inAllTime = false
 
@@ -472,31 +412,32 @@ function M.start (baseLink, token, leaderBoardCount)
 					--displa the rows
 					if i == 1 then --if its the first person displayed then...
 						if #table == 1 then -- if theres only 1 person then...
-							print("ONLY 1")
-							playerRow = display.newImage( "scoredojo/tableSingle.png", 0, i*114 - 100)
+							print("ONLY 1...")
+							playerRow = display.newImage( "scoredojo/tableSingle.png", 0, 10)
 							currentLoaderboardGroup:insert( playerRow )
 						else
-							playerRow = display.newImage( "scoredojo/tableTop.png", 0, i*114 - 100)
+							print("NO TABLE")
+							playerRow = display.newImage( "scoredojo/tableTop.png", 0, i*113 - 100)
 							currentLoaderboardGroup:insert( playerRow )
 						end
 					elseif i == #table then --if its the last person displayed then...
-						playerRow = display.newImage( "scoredojo/tableBot.png", 0, i*114 - 100)
+						playerRow = display.newImage( "scoredojo/tableBot.png", 0, i*113 - 100)
 						currentLoaderboardGroup:insert( playerRow )
 						scrollView:insert(currentLoaderboardGroup)
 					elseif i ~= 1 and i ~= #table then --if its any of the other people displayed then...
-						playerRow = display.newImage( "scoredojo/tableMid.png", 0, i*114 - 100)
+						playerRow = display.newImage( "scoredojo/tableMid.png", 0, i*113 - 100)
 						currentLoaderboardGroup:insert( playerRow )
 					end
-					local playerRankBox = display.newRoundedRect(currentLoaderboardGroup, playerRow.x - 240, playerRow.y - 50, 100, 100, 20)
+					local playerRankBox = display.newRoundedRect(currentLoaderboardGroup, playerRow.x - 220, playerRow.y - 50, 100, 100, 20)
 					playerRankBox:setFillColor(100, 100, 100)
 					playerRankBox.alpha = 0.1
-					local playerRankText = display.newText(currentLoaderboardGroup, i, playerRankBox.x, playerRankBox.y , "DimitriSwank", 70)
+					local playerRankText = display.newText(currentLoaderboardGroup, i, playerRankBox.x, playerRankBox.y , "Hiruko", 70)
 					playerRankText.x, playerRankText.y = playerRankBox.x, playerRankBox.y
 					playerRankText:setTextColor(199, 147, 22)
-					local playerNameText = display.newText(currentLoaderboardGroup, table[i].username, playerRankBox.x + 75, 0, "DimitriSwank", 35)
+					local playerNameText = display.newText(currentLoaderboardGroup, table[i].username, playerRankBox.x + 75, 0, "Hiruko", 35)
 					playerNameText:setTextColor(100, 100, 100)
 					playerNameText.y = playerRow.y - 30
-					local playerScoreText = display.newText(currentLoaderboardGroup, table[i].score, playerRankBox.x + 75, 0, "DimitriSwank", 50)
+					local playerScoreText = display.newText(currentLoaderboardGroup, table[i].score, playerRankBox.x + 75, 0, "Hiruko", 50)
 					playerScoreText:setTextColor(199, 147, 22)
 					playerScoreText.y = playerRow.y + 25
 					--add them to a new scrollView
@@ -509,51 +450,70 @@ function M.start (baseLink, token, leaderBoardCount)
 						end
 					end
 					if inAllTime == true then
+
 					else
 						if table.name == "allTime" then
+							--print("**** allTime ****")
 							if i == #table then
 								i = i + 1
 								local userInfo = Load("userInfo")
 								--put one at bottom for guy if he isn't in top 10
-								print("ONLY 1")
+								--print("ONLY 1")
 								playerRow = display.newImage( "scoredojo/tableSingle.png", 22, i*114 - 100)
 								playerRow.x = cw/2
 								playerRow.y = playerRow.y + 50
 								currentLoaderboardGroup:insert( playerRow )
-								local playerRankBox = display.newRoundedRect(currentLoaderboardGroup, playerRow.x - 265, playerRow.y - 50, 100, 100, 20)
+								local playerRankBox = display.newRoundedRect(currentLoaderboardGroup, playerRow.x - 243, playerRow.y - 50, 100, 100, 20)
 								playerRankBox:setFillColor(100, 100, 100)
 								playerRankBox.alpha = 0.1
-								local playerRankText = display.newText(currentLoaderboardGroup, "", playerRankBox.x, playerRankBox.y , "DimitriSwank", 70)
+								local playerRankText = display.newText(currentLoaderboardGroup, "", playerRankBox.x, playerRankBox.y , "Hiruko", 70)
 								playerRankText.x, playerRankText.y = playerRankBox.x, playerRankBox.y
 								playerRankText:setTextColor(199, 147, 22)
-								local playerNameText = display.newText(currentLoaderboardGroup, userInfo.username, playerRankBox.x + 75, 0, "DimitriSwank", 35)
+								local playerNameText = display.newText(currentLoaderboardGroup, userInfo.username, playerRankBox.x + 75, 0, "Hiruko", 35)
 								playerNameText:setTextColor(100, 100, 100)
 								playerNameText.y = playerRow.y - 30
-								local playerScoreText = display.newText(currentLoaderboardGroup, "", playerRankBox.x + 90, 0, "DimitriSwank", 50)
+								local playerScoreText = display.newText(currentLoaderboardGroup, "", playerRankBox.x + 90, 0, "Hiruko", 50)
 								playerScoreText:setTextColor(199, 147, 22)
 								playerScoreText.y = playerRow.y + 25
 
 								playerRow:setFillColor(220,220,255)
-								local divider = display.newRoundedRect(currentLoaderboardGroup, 0, 0, cw-50, 10, 4)
+								local divider = display.newRoundedRect(currentLoaderboardGroup, 0, 0, cw-60, 10, 4)
 								divider.x, divider.y = cw/2, playerRow.y - 80
 								divider:setFillColor(220,220,220)
 
 								--get users rank and score
-								local userRankScore = {rank = 0, score = 0}
+								local userRankScore = {rank = 0, score = 0}  
 								local function networkCallback (event)
 									local data = json.decode(event.response)
 									if data.success == true then
-										playerRankText.text = tostring(data.rank)
-										playerScoreText.text = tostring(data.score)
-										return userRankScore
+										if data.rank == 1 or data.rank == 2 or data.rank == 3 or data.rank == 4 or data.rank == 5 or data.rank == 6 or data.rank == 7 or data.rank == 8 or data.rank == 9 or data.rank == 10 then
+											playerRankText.text = tostring(data.rank)
+											playerScoreText.text = "Your in the top 10!"
+											playerScoreText.x = playerScoreText.x + 165
+											return userRankScore
+										elseif data.rank > 10 then
+											playerRankText.text = tostring(data.rank)
+											playerScoreText.text = tostring(data.score)
+											if data.rank > 99 then
+												playerRankText.size = playerRankText.size - 25
+												playerRankText.x = playerRankText.x - 5
+											end
+											playerScoreText.x = playerScoreText.x + 15
+											return userRankScore
+										end											
 									else 
+										playerRankText.text = "--"
+										playerScoreText.text = "No score submitted!"
+										playerScoreText.size = 45
+										playerScoreText.x = playerScoreText.x + 164
 									end
 								end
+								--print("getRank()")
 
 								link = tostring(baseLink).."getRank"
-								postData = "leaderboard_key="..tostring(token)
+								local body = "leaderboard_key="..tostring(leaderboardKey)
 								local params = {}
-								params.body = postData
+								params.body = body
 								params.headers = headers
 								network.request( link, "POST", networkCallback, params)
 							end
@@ -561,27 +521,32 @@ function M.start (baseLink, token, leaderBoardCount)
 					end
 					topBarGroup:toFront()
 					backBtn:toFront()
+					loadingScreenGroup:toFront()
 				end
+				print("CREATED ROWS")
 			else
+				--no people in leaderboard
 				clearGroup(currentLoaderboardGroup)
-				local playerRow = display.newImage( "scoredojo/tableSingle.png", 0, 1*114 - 100)
+				local playerRow = display.newImage( "scoredojo/tableSingle.png", 0, 1*114 - 30)
 				currentLoaderboardGroup:insert( playerRow )
-				local playerRankBox = display.newRoundedRect(currentLoaderboardGroup, playerRow.x - 240, playerRow.y - 50, 100, 100, 20)
+				local playerRankBox = display.newRoundedRect(currentLoaderboardGroup, playerRow.x - 220, playerRow.y - 50, 100, 100, 20)
 				playerRankBox:setFillColor(100, 100, 100)
 				playerRankBox.alpha = 0.1
-				local playerRankText = display.newText(currentLoaderboardGroup, "0", playerRankBox.x, playerRankBox.y , "DimitriSwank", 70)
+				local playerRankText = display.newText(currentLoaderboardGroup, "0", playerRankBox.x, playerRankBox.y , "Hiruko", 70)
 				playerRankText.x, playerRankText.y = playerRankBox.x, playerRankBox.y
 				playerRankText:setTextColor(199, 147, 22)
-				local playerNameText = display.newText(currentLoaderboardGroup, "There's no one here!", playerRankBox.x + 75, 0, "DimitriSwank", 35)
+				local playerNameText = display.newText(currentLoaderboardGroup, "There's no one here!", playerRankBox.x + 75, playerRankBox.y, "Hiruko", 35)
 				playerNameText:setTextColor(100, 100, 100)
 				playerNameText.y = playerRow.y - 30
-				local playerScoreText = display.newText(currentLoaderboardGroup, "0", playerRankBox.x + 75, 0, "DimitriSwank", 50)
+				local playerScoreText = display.newText(currentLoaderboardGroup, "Be the first one!", playerRankBox.x + 75, playerRankBox.y, "Hiruko", 50)
 				playerScoreText:setTextColor(199, 147, 22)
 				playerScoreText.y = playerRow.y + 25
 				--add them to a new scrollView
+				--scrollView:insert(currentLoaderboardGroup)
 				playerRow.x = cw/2
 				topBarGroup:toFront()
 				backBtn:toFront()
+				loadingScreenGroup:toFront()
 			end
 			--display your name at bottom if you're not in all time
 		end
@@ -590,8 +555,11 @@ function M.start (baseLink, token, leaderBoardCount)
 		local function getLeaderboardInfo(table, timeframe)
 			local link = tostring(baseLink).."getTopN"
 			local userInfo = Load("userInfo")
+			local headers={}
+			print ("AUTHKey="..tostring(userInfo.authKey))
+			headers["Content-Type"] = "application/x-www-form-urlencoded"
+			headers["Accept"] = "application/json"
 			headers["Authorization"] = "Token token="..tostring(userInfo.authKey)
-
 			clearGroup(errorsGroup)
 
 			local function networkCallback(event)
@@ -621,10 +589,14 @@ function M.start (baseLink, token, leaderBoardCount)
 			end
 
 			local params = {}
-			local postData = "leaderboard_key="..tostring(token).."&count="..tostring(leaderBoardCount).."&timeframe="..tostring(timeframe)
-			params.body = postData
+			local body = "leaderboard_key="..tostring(leaderboardKey).."&count="..tostring(leaderBoardCount).."&timeframe="..tostring(timeframe)
+
 			params.headers = headers
+
 			local loadingScreen = displayLoadingScreen(group, ch/2)
+			--print("LINK:"..link.." POST:"..postData.." HEADER:"..headers["Authorization"] )
+			local link = tostring(baseLink).."getTopN"
+			params.body = body
 			network.request( link, "POST", networkCallback, params)
 		end
 		getLeaderboardInfo("allTime", 1)
@@ -636,87 +608,96 @@ function M.start (baseLink, token, leaderBoardCount)
 		checkForLeaderboardDataTimer = timer.performWithDelay(100, function()
 			if allTime then
 				if #allTime > 0 then
+					--print("asdfDISPLAYallTIMEman")
 					timer.cancel(checkForLeaderboardDataTimer)
 					displayLeaderboard(allTime)
 				end
 			end
 		end, 15)
 
-		local function tabCallback(event)
-	    	if event.target.id == 1 then 
+
+		 function lbTabCallback( event )
+			--print("lbTabCallback()"..event.target._id)
+
+	    	if event.target._id == "1" then 
+	    		--print("DAY")
 	    		displayLeaderboard(day)
-	    	elseif event.target.id == 2 then
+	    	elseif event.target._id == "2" then
 	    		displayLeaderboard(week)
-	    	elseif event.target.id == 3 then
+	    	elseif event.target._id == "3" then
 	    		displayLeaderboard(allTime)
 	    	end
 	    end
 
-		local tabButtons = {
-	        {
+		local tabButtons2 = {
+	        {	
+	        	
 	            label="Today",
-	            up="scoredojo/blank.png",
-	            down="scoredojo/blank.png",
-	            width=32, height=32,
-	            onPress=tabCallback,
-	            size=25,
+	           	labelYOffset=-50,
+	            defaultFile="scoredojo/blank.png",
+	            overFile="scoredojo/blank.png",
+	            width=32, height=130,
+	            size=36,
+	            onPress=lbTabCallback,	
+	            id="1",            
 	        },
 	        {
 	            label="This Week",
-	            up="scoredojo/blank.png",
-	            down="scoredojo/blank.png",
-	            width=32, height=32,
-	            size=25,
-	            onPress=tabCallback,
+	            labelYOffset=-50,
+	            defaultFile="scoredojo/blank.png",
+	            overFile="scoredojo/blank.png",
+	            width=32, height=130,
+	            size=36,
+	            onPress=lbTabCallback,
+	            id="2", 
 	        },
 	        {
 	            label="All Time",
-	            up="scoredojo/blank.png",
-	            down="scoredojo/blank.png",
-	            width=32, height=32,
-	            size=25,
-	            onPress=tabCallback,
+	            labelYOffset=-50,
+	            defaultFile="scoredojo/blank.png",
+	            overFile="scoredojo/blank.png",
+	            width=32, height=130,
+	            size=36,
+	            onPress=lbTabCallback,
 	            selected = true,
+	            id="3", 
 	        },
 	    }
-	    
 	    tabs = widget.newTabBar{
+	    	height=130,
 	        top=ch-130,
-	        height=130,
-	        buttons=tabButtons
+	       	backgroundFile = "scoredojo/tabbar.png",
+			tabSelectedLeftFile = "scoredojo/tabBar_tabSelectedLeft.png",
+			tabSelectedMiddleFile = "scoredojo/tabBar_tabSelectedMiddle.png",
+			tabSelectedRightFile = "scoredojo/tabBar_tabSelectedRight.png",
+			tabSelectedFrameWidth = 20,
+			tabSelectedFrameHeight = 120,
+	        buttons=tabButtons2,
 	    }
 	    group:insert(tabs)
-	    tabs.buttons[1].width = cw/3
-	    tabs.buttons[2].width = cw/3
-	    tabs.buttons[3].width = cw/3
-	    tabs.buttons[1].label.width = 60
-	    tabs.buttons[2].label.width = 110
-	    tabs.buttons[3].label.width = 90
-	    tabs.buttons[1].label.height = 50
-	    tabs.buttons[2].label.height = 50
-	    tabs.buttons[3].label.height = 50
-	    tabs.buttons[1].label.y = 40
-	    tabs.buttons[2].label.y = 40
-	    tabs.buttons[3].label.y = 40
-	    tabs.buttons[2].x = tabs.buttons[2].x  - tabs.buttons[2].width + 87
-	    tabs.buttons[1].x = -110
-	    tabs.buttons[3].x = cw - 315
+
 	    loadingScreenGroup:toFront()
+
 	    --topBar shit
-	    local topBar = display.newImage(topBarGroup, "scoredojo/topBar.png", 0, -40)
+	    local topBar = display.newImage(topBarGroup, "scoredojo/topBar.png", 0, -65)
 	    topBar:scale(1, 0.6)
 
-		--local backBtn = displayNewButton(topBarGroup, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "DimitriSwank", 40, nil, nil)	
+		--local backBtn = displayNewButton(topBarGroup, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "Hiruko", 40, nil, nil)	
 		backBtn:toFront()
+		loadingScreenGroup:toFront()
 	end
 	return group
 end
 
-function M.submitHighscore (baseLink, leaderboard_key, scoreType, scoreValue)
+function M.submitHighscore (baseLink, leaderboardKey, scoreType, scoreValue)
 
 	local json = require "json"
 	local userInfo = Load("userInfo")
+
 	if userInfo and userInfo.authKey and userInfo.username then
+		headers["Accept"] = "application/json"
+		headers["Authorization"] = "Token token="..tostring(userInfo.authKey)
+		headers["Content-Type"] = "application/x-www-form-urlencoded"
 		local function submitHighscoreCallback ( event )
 			local data = json.decode(event.response)
 			print(data)
@@ -728,7 +709,7 @@ function M.submitHighscore (baseLink, leaderboard_key, scoreType, scoreValue)
 
 		end
 		local link = baseLink.."submitHighScore"
-		local postData = "leaderboard_key="..tostring(leaderboard_key).."&score_type="..tostring(scoreType).."&score_value="..tostring(scoreValue)
+		local postData = "leaderboard_key="..leaderboardKey.."&score_type="..tostring(scoreType).."&score_value="..tostring(scoreValue)
 		local params = {}
 		params.body = postData
 		params.headers = headers

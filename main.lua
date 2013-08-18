@@ -111,82 +111,83 @@ director = {
     end
 }
 
-function displayNewButton(group, image, imageDown, x, y, shouldScale, scaleX, timeToScale, sceneToGoTo, text, font, textSize, customFunction, id)
+function displayNewButton(group, image, imageDown, x, y, shouldScale, scaleX, timeToScale, sceneToGoTo, text, tr, tg, tb, font, textSize, customFunction, id)
 	local btnGroup = display.newGroup()
 	group:insert(btnGroup)
 	local newBtn = display.newImage(image, 0, 0 )
-	newBtn.id = id
-	btnGroup:insert(newBtn)
-	--newBtn.x = x
-	local overlayBtn
-	local btnText
-	newBtn.alpha = 1
+	if newBtn then
+		newBtn.id = id
+		btnGroup:insert(newBtn)
+		--newBtn.x = x
+		local overlayBtn
+		local btnText
+		newBtn.alpha = 1
 
-	local btnText
-	if text ~= nil then
-		newBtn.text = btnText
-		btnText = display.newText( text, newBtn.x, newBtn.y, font, textSize )
-		btnText.x, btnText.y = newBtn.x, newBtn.y + 7
-		btnGroup:insert(btnText)
-	end
+		local btnText
+		if text ~= nil then
+			newBtn.text = btnText
+			btnText = display.newText( text, newBtn.x, newBtn.y, font, textSize )
+			btnText:setTextColor(tr,tg,tb)
+			btnText.x, btnText.y = newBtn.x, newBtn.y + 7
+			btnGroup:insert(btnText)
+		end
 
-	local function onNewBtnTouch (event)
-		if event.phase == "began" then
-			currentButtonDown = newBtn
-			if shouldScale == true then
-				transition.to(newBtn, {time=timeToScale, xScale = scaleX, yScale = scaleX})
-				transition.to(btnText, {time=timeToScale, xScale = scaleX, yScale = scaleX})
-			end
-			if imageDown ~= nil then
-				overlayBtn = display.newImage(btnGroup, imageDown, 0, 0)
-				btnGroup:insert(overlayBtn)
-				btnText:toFront()
-				btnText.alpha = 0.7
-			end
-		elseif event.phase == "ended" then
-			btnText.alpha = 1
-			display.remove(overlayBtn)
-			if customFunction then
-				customFunction(btnGroup)
-			end
-			currentButtonDown = nil
-			--if customFunction == nil then
+		local function onNewBtnTouch (event)
+			if event.phase == "began" then
+				currentButtonDown = newBtn
 				if shouldScale == true then
-					transition.to(newBtn, {time=timeToScale, xScale = 1, yScale = 1, onComplete=function()transition.cancel(newBtn) if sceneToGoTo ~= nil then end end})
-					transition.to(btnText, {time=timeToScale, xScale = 1, yScale = 1, onComplete=function()transition.cancel(newBtn) if sceneToGoTo ~= nil then end end})			
-				elseif shouldScale == false then
-					if sceneToGoTo ~= nil then 
-						if overlayBtn then
-							--btnGroup:removeSelf()
-						end
-						director:changeScene(sceneToGoTo)
-					end
+					transition.to(newBtn, {time=timeToScale, xScale = scaleX, yScale = scaleX})
+					transition.to(btnText, {time=timeToScale, xScale = scaleX, yScale = scaleX})
 				end
-			--end
+				if imageDown ~= nil then
+					overlayBtn = display.newImage(btnGroup, imageDown, 0, 0)
+					btnGroup:insert(overlayBtn)
+					btnText:toFront()
+					btnText.alpha = 0.5
+				end
+			elseif event.phase == "ended" then
+				btnText.alpha = 1
+				display.remove(overlayBtn)
+				if customFunction then
+					customFunction(btnGroup)
+				end
+				currentButtonDown = nil
+				--if customFunction == nil then
+					if shouldScale == true then
+						transition.to(newBtn, {time=timeToScale, xScale = 1, yScale = 1, onComplete=function()transition.cancel(newBtn) if sceneToGoTo ~= nil then end end})
+						transition.to(btnText, {time=timeToScale, xScale = 1, yScale = 1, onComplete=function()transition.cancel(newBtn) if sceneToGoTo ~= nil then end end})			
+					elseif shouldScale == false then
+						if sceneToGoTo ~= nil then 
+							if overlayBtn then
+								--btnGroup:removeSelf()
+							end
+							director:changeScene(sceneToGoTo, "crossfade")
+						end
+					end
+				--end
+			end
+			return true
 		end
-		return true
-	end
 
-	newBtn.cancel = function ()
-		if overlayBtn then
-			btnText.alpha = 1
-			display.remove(overlayBtn)
-			overlayBtn = nil
+		newBtn.cancel = function ()
+			if overlayBtn then
+				btnText.alpha = 1
+				display.remove(overlayBtn)
+				overlayBtn = nil
+			end
+			if shouldScale == true then
+				transition.to(newBtn, {time=timeToScale, xScale = 1, yScale = 1})
+				transition.to(btnText, {time=timeToScale, xScale = 1, yScale = 1})
+			end
 		end
-		if shouldScale == true then
-			transition.to(newBtn, {time=timeToScale, xScale = 1, yScale = 1})
-			transition.to(btnText, {time=timeToScale, xScale = 1, yScale = 1})
-		end
-	end
 
-	
-	--newBtn.touch = onNewBtnTouch
-	--newBtn:addEventListener("touch", newBtn)
-	newBtn:addEventListener("touch", onNewBtnTouch)
-	btnGroup.x = x
-	btnGroup.y = y
-	return btnGroup
+		newBtn:addEventListener("touch", onNewBtnTouch)
+		btnGroup.x = x
+		btnGroup.y = y
+		return btnGroup
+	end
 end
+
 
 local function runtimeTouch (event)
 

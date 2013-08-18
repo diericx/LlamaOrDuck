@@ -8,7 +8,7 @@ function M.new()
 	bg.x = cw/2
 	bg.y = ch/2
 
-	local backBtn = displayNewButton(group, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 20, 10, false, 1, nil, "menu", "Back", "DimitriSwank", 40, nil, nil)	
+	local creditsBtn = displayNewButton(group, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", 10, 10, false, 1, nil, "menu", "Back", 255, 255, 255, "DimitriSwank", 40, nil, nil)
 
 
 	local people = {

@@ -86,9 +86,12 @@ function M.new()
 		timer.performWithDelay( 100, function () director:changeScene("gameNew") end, 1)
 	end
 
-	local playBtn = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2 - 175, cw/2, false, 1, 0, nil, "Play", "DimitriSwank", 80, displayLoadingScreen, nil)
-	local leaderboardsBtnH = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2 - 175, cw/2 + 200, false, 1, 0, "leaderboards", "Highscores", "DimitriSwank", 57, nil, nil)
-	local creditsBtn = displayNewButton(group, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", cw-200, 10, false, 1, nil, "creditsPage", "Credits", "DimitriSwank", 40, nil, nil)	
+	local playBtn = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2 - 175, cw/2, false, 1, 0, nil, "Play", 255, 255, 255, "DimitriSwank", 80, displayLoadingScreen, nil)
+
+	local leaderboardsBtnH = displayNewButton(group, "Images/buttonUpMenu.png", "Images/buttonDownMenu.png", cw/2 - 175, cw/2 + 200, false, 1, 0, "leaderboards", "Highscores", 255, 255, 255, "DimitriSwank", 57, nil, nil)
+
+	local creditsBtn = displayNewButton(group, "Images/buttonUpSmall.png", "Images/buttonDownSmall.png", cw-200, 10, false, 1, nil, "creditsPage", "Credits", 255, 255, 255, "DimitriSwank", 40, nil, nil)
+
 
 	--group:insert(leaderboardsBtnH)
 	--director:changeScene("game")
